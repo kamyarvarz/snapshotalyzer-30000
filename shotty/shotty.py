@@ -4,6 +4,17 @@ import click
 session = boto3.Session(profile_name='identity')
 ec2 = session.resource('ec2')
 
+def filter_instances(purpose):
+     instances = []
+
+     if purpose:
+        filters = [{'Name':'tag:purpose', 'Values': [purpose]}]
+        instances = ec2.instances.filter(Filters=filters)
+     else:
+        instances = ec2.instances.all()
+
+     return instances
+
 @click.group()
 def instances():
         """Commands for instances"""
@@ -13,13 +24,8 @@ def instances():
 
 def list_instances(purpose):
     "List EC2 instances"
-    instances = []
-
-    if purpose:
-        filters = [{'Name':'tag:purpose', 'Values': [purpose]}]
-        instances = ec2.instances.filter(Filters=filters)
-    else:
-        instances = ec2.instances.all()
+    
+    instances = filter_instances(purpose)
 
     for i in instances:
         tags = {t['Key']: t['Value'] for t in i.tags or []}
@@ -37,17 +43,24 @@ def list_instances(purpose):
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
 def stop_instances(purpose):
     "Stop EC2 instances"
-    instances = []
-
-    if purpose:
-        filters = [{'Name':'tag:purpose', 'Values': [purpose]}]
-        instances = ec2.instances.filter(Filters=filters)
-    else:
-        instances = ec2.instances.all()
+    
+    instances = filter_instances(purpose)
 
     for i in instances:
         print("Stopping {0}...".format(i.id))
         i.stop()
+    return
+
+@instances.command('start')
+@click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
+def start_instances(purpose):
+    "Start EC2 instances"
+    
+    instances = filter_instances(purpose)
+
+    for i in instances:
+        print("Starting {0}...".format(i.id))
+        i.start()
     return
 
 if __name__ == '__main__':
