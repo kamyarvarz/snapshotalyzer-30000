@@ -20,6 +20,32 @@ def filter_instances(purpose):
 def cli():
         """Shotty manages snapshots"""
 
+@cli.group('snapshots')
+def snapshots():
+        """Commands for snapshots"""
+
+@snapshots.command('list')
+@click.option('--purpose', default=None, help="Only snapshots for this purpose (tag purpose:<name>)")
+
+def list_snapshots(purpose):
+    "List EC2 snapshots"
+    
+    instances = filter_instances(purpose)
+
+    for i in instances:
+            for v in i.volumes.all():
+                    for s in v.snapshots.all():
+                        print(', '.join((
+                                s.id,
+                                v.id,
+                                i.id,
+                                s.state,
+                                s.progress,
+                                s.start_time.strftime("%c")
+                                )))
+
+    return
+
 @cli.group('volumes')
 def volumes():
         """Commands for volumes"""
@@ -27,6 +53,23 @@ def volumes():
 @cli.group('instances')
 def instances():
         """Commands for instances"""
+
+@instances.command('snapshot')
+@click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
+
+
+def create_snapshots(purpose):
+    "Create snapshots for EC2 instances"
+    
+    instances = filter_instances(purpose)
+    for i in instances:
+                i.stop()
+                for v in volumes.all():
+                        print("Creating snapshots of {0}".format(v.id))
+                        v.create_snapshots(Description="Created by snapshotalyzer-30000")
+    return
+
+
 
 @instances.command('list')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")

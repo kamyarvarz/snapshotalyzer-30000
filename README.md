@@ -11,10 +11,19 @@ shotty uses the configuration file created by the AWS cli. e.g.
 
 `aws configure --profile identity`
 
-## Running
+## Running in Windows
 
-`pipenv run "python shotty/shotty.py <command> <--purpose=PURPOSE"`
+`pipenv run python shotty\shotty.py <command> <subcommand> <--purpose=PURPOSE>`
 
-*command* is list, start, or stop
+*command* is instances, volumes, or snapshots
+*subcommand* - depends on command:
+    instances has the following subcommands
+        list, start, or stop
 
-*purpose* is optional
+    volumes has the following subcommands
+        list
+
+    snapshots has the following subcommands
+        list
+
+*purpose* is optional and is your tag name
