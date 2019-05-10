@@ -15,7 +15,16 @@ def filter_instances(purpose):
 
      return instances
 
-@click.group()
+
+@click.group('')
+def cli():
+        """Shotty manages snapshots"""
+
+@cli.group('volumes')
+def volumes():
+        """Commands for volumes"""
+
+@cli.group('instances')
 def instances():
         """Commands for instances"""
 
@@ -63,7 +72,27 @@ def start_instances(purpose):
         i.start()
     return
 
+@volumes.command('list')
+@click.option('--purpose', default=None, help="Only volumes for this purpose (tag purpose:<name>)")
+
+def list_volumes(purpose):
+    "List EC2 volumes"
+    
+    instances = filter_instances(purpose)
+         
+    for i in instances:
+        for v in i.volumes.all():
+                print(', '.join((
+                        v.id,
+                        i.id,
+                        v.state,
+                        str(v.size) + "GiB",
+                        v.encrypted and "Encrypted" or "Not Encrypted" )))
+
+    return
+
+
 if __name__ == '__main__':
     
-    instances()
+    cli()
         
