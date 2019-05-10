@@ -24,9 +24,16 @@ def cli():
 def snapshots():
         """Commands for snapshots"""
 
+@cli.group('volumes')
+def volumes():
+        """Commands for volumes"""
+
+@cli.group('instances')
+def instances():
+        """Commands for instances"""
+
 @snapshots.command('list')
 @click.option('--purpose', default=None, help="Only snapshots for this purpose (tag purpose:<name>)")
-
 def list_snapshots(purpose):
     "List EC2 snapshots"
     
@@ -46,34 +53,31 @@ def list_snapshots(purpose):
 
     return
 
-@cli.group('volumes')
-def volumes():
-        """Commands for volumes"""
-
-@cli.group('instances')
-def instances():
-        """Commands for instances"""
-
-@instances.command('snapshot')
+@instances.command('snapshot',help="Create snapshots of all volumes")
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
-
-
 def create_snapshots(purpose):
     "Create snapshots for EC2 instances"
     
     instances = filter_instances(purpose)
     for i in instances:
+                print("Stopping {0}...".format(i.id))
                 i.stop()
-                for v in volumes.all():
+                i.wait_until_stopped()
+
+                for v in i.volumes.all():
                         print("Creating snapshots of {0}".format(v.id))
-                        v.create_snapshots(Description="Created by snapshotalyzer-30000")
+                        v.create_snapshot(Description="Created by snapshotalyzer-30000")
+                print("Restarting {0}...".format(i.id))
+                i.start()
+# we want ot restart one instnace at a time
+                i.wait_until_running()
+    print ("Job's done!")
     return
 
 
 
 @instances.command('list')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
-
 def list_instances(purpose):
     "List EC2 instances"
     
@@ -117,7 +121,6 @@ def start_instances(purpose):
 
 @volumes.command('list')
 @click.option('--purpose', default=None, help="Only volumes for this purpose (tag purpose:<name>)")
-
 def list_volumes(purpose):
     "List EC2 volumes"
     
