@@ -57,77 +57,76 @@ def list_snapshots(purpose):
 @instances.command('snapshot',help="Create snapshots of all volumes")
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
 def create_snapshots(purpose):
-    "Create snapshots for EC2 instances"
+        "Create snapshots for EC2 instances"
     
-    instances = filter_instances(purpose)
-    for i in instances:
-                print("Stopping {0}...".format(i.id))
-                i.stop()
-                i.wait_until_stopped()
+        instances = filter_instances(purpose)
+                for i in instances:
+                        print("Stopping {0}...".format(i.id))
+                        i.stop()
+                        i.wait_until_stopped()
 
-                for v in i.volumes.all():
-                        print("Creating snapshots of {0}".format(v.id))
-                        v.create_snapshot(Description="Created by snapshotalyzer-30000")
+                        for v in i.volumes.all():
+                                print("Creating snapshots of {0}".format(v.id))
+                                v.create_snapshot(Description="Created by snapshotalyzer-30000")
                 print("Restarting {0}...".format(i.id))
                 i.start()
-# we want ot restart one instnace at a time
+# we want to restart one instnace at a time
                 i.wait_until_running()
-    print ("Job's done!")
-    return
+        print ("Job's done!")
+        return
 
 
 
 @instances.command('list')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
 def list_instances(purpose):
-    "List EC2 instances"
+        "List EC2 instances"
     
-    instances = filter_instances(purpose)
+        instances = filter_instances(purpose)
 
-    for i in instances:
-        tags = {t['Key']: t['Value'] for t in i.tags or []}
-        print(', '.join((
-                i.id,
-                i.instance_type,
-                i.placement['AvailabilityZone'],
-                i.state['Name'],
-                i.public_dns_name,
-                tags.get('purpose', '<no tag>'))))
+        for i in instances:
+                tags = {t['Key']: t['Value'] for t in i.tags or []}
+                print(', '.join((
+                        i.id,
+                        i.instance_type,
+                        i.placement['AvailabilityZone'],
+                        i.state['Name'],
+                        i.public_dns_name,
+                        tags.get('purpose', '<no tag>'))))
 
-    return
+        return
 
 @instances.command('stop')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
 def stop_instances(purpose):
-    "Stop EC2 instances"
-    
-    instances = filter_instances(purpose)
+        "Stop EC2 instances"
+        
+        instances = filter_instances(purpose)
 
-    for i in instances:
-        print("Stopping {0}...".format(i.id))
-        try:
-
-                i.stop()
-        except botocore.exceptions.ClientError as e:
-                print(" Could not stop {0}. ".format(i.id) + str(e))
-                continue        
-    return
+        for i in instances:
+                print("Stopping {0}...".format(i.id))
+                try:
+                        i.stop()
+                except botocore.exceptions.ClientError as e:
+                        print(" Could not stop {0}. ".format(i.id) + str(e))
+                        continue        
+        return
 
 @instances.command('start')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
 def start_instances(purpose):
-    "Start EC2 instances"
-    
-    instances = filter_instances(purpose)
+        "Start EC2 instances"
+        
+        instances = filter_instances(purpose)
 
-    for i in instances:
-        print("Starting {0}...".format(i.id))
-        try:
-                i.start()
-        except botocore.exceptions.ClientError as e:
-                print(" Could not start {0}. ".format(i.id) + str(e))
-                continue
-    return
+        for i in instances:
+                print("Starting {0}...".format(i.id))
+                try:
+                        i.start()
+                except botocore.exceptions.ClientError as e:
+                        print(" Could not start {0}. ".format(i.id) + str(e))
+                        continue
+        return
 
 @volumes.command('list')
 @click.option('--purpose', default=None, help="Only volumes for this purpose (tag purpose:<name>)")
