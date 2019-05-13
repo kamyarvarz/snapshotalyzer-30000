@@ -60,14 +60,19 @@ def create_snapshots(purpose):
         "Create snapshots for EC2 instances"
     
         instances = filter_instances(purpose)
-                for i in instances:
-                        print("Stopping {0}...".format(i.id))
-                        i.stop()
-                        i.wait_until_stopped()
+        for i in instances:
+                print("Stopping {0}...".format(i.id))
+                i.stop()
+                i.wait_until_stopped()
 
-                        for v in i.volumes.all():
-                                print("Creating snapshots of {0}".format(v.id))
-                                v.create_snapshot(Description="Created by snapshotalyzer-30000")
+                for v in i.volumes.all():
+                        print("Creating snapshots of {0}".format(v.id))
+                        v.create_snapshot(Description="Created by snapshotalyzer-30000",
+                        TagSpecifications=[
+                                {
+                                'ResourceType' : 'snapshot',
+                                'Tags' : v.tags,
+                                }])
                 print("Restarting {0}...".format(i.id))
                 i.start()
 # we want to restart one instnace at a time
@@ -75,6 +80,20 @@ def create_snapshots(purpose):
         print ("Job's done!")
         return
 
+@instances.command('delete_snap',help="Deletes snapshots of all volumes matching the tags")
+@click.option('--purpose', default='Python', help="Only instances for this purpose (tag purpose:<name>)")
+def delete_snap(purpose):
+        "Delete tagged snapshots for EC2 instances"
+    
+        instances = filter_instances(purpose)
+        for i in instances:
+                for v in i.volumes.all():
+                        for s in v.snapshots.all():
+                                print("Deleting snapshots {0} of volume {1} of instance {2} ".format(s.id, v.id, i.id))
+                                s.delete(s.id)
+                
+        print ("Job's done!")
+        return
 
 
 @instances.command('list')
