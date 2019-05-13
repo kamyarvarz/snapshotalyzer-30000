@@ -19,7 +19,7 @@ shotty uses the configuration file created by the AWS cli. e.g.
 *subcommand* - depends on command:
 
     instances has the following subcommands
-        list, start, stop, snapshot
+        list, start, stop, snapshot, delete_snap
 
     volumes has the following subcommands
         list
