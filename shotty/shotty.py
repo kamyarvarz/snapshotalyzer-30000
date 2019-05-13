@@ -16,6 +16,9 @@ def filter_instances(purpose):
 
      return instances
 
+def has_pending_snapshot(volume):
+        snapshots = list(volume.snapshots.all())
+        return snapshots and snapshots[0] == 'pending'
 
 @click.group('')
 def cli():
@@ -66,6 +69,9 @@ def create_snapshots(purpose):
                 i.wait_until_stopped()
 
                 for v in i.volumes.all():
+                        if has_pending_snapshot(v):
+                                print(" Skipping {0}, snapshot already in progress".format(v.id))
+                                continue
                         print("Creating snapshots of {0}".format(v.id))
                         v.create_snapshot(Description="Created by snapshotalyzer-30000",
                         TagSpecifications=[
