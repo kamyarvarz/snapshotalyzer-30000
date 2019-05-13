@@ -19,7 +19,7 @@ shotty uses the configuration file created by the AWS cli. e.g.
 *subcommand* - depends on command:
 
     instances has the following subcommands
-        list, start, stop, snapshot, delete_snap
+        list, start, stop, reboot, snapshot, delete_snap
 
     volumes has the following subcommands
         list
@@ -28,3 +28,4 @@ shotty uses the configuration file created by the AWS cli. e.g.
         list
 
 *purpose* is optional and is your tag name
+*force* is optional (required only if purpose tag is missing)

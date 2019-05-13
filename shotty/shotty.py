@@ -59,14 +59,22 @@ def list_snapshots(purpose):
 
 @instances.command('snapshot',help="Create snapshots of all volumes")
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
-def create_snapshots(purpose):
+@click.option('--force', default=False, is_flag=True,
+        help="if the purpose tag is missing, only delete if the --force option is present")
+def create_snapshots(purpose, force):
         "Create snapshots for EC2 instances"
+        if not purpose and not force: 
+                print("No tag info was given. Use --purpose=<tag valye>, or specify --force")
+                return        
     
         instances = filter_instances(purpose)
         for i in instances:
-                print("Stopping {0}...".format(i.id))
-                i.stop()
-                i.wait_until_stopped()
+                instance_running = False
+                if i.state['Name'] == 'running':
+                        instance_running = True
+                        print("Stopping {0}...".format(i.id))
+                        i.stop()
+                        i.wait_until_stopped()
 
                 for v in i.volumes.all():
                         if has_pending_snapshot(v):
@@ -79,18 +87,25 @@ def create_snapshots(purpose):
                                 'ResourceType' : 'snapshot',
                                 'Tags' : v.tags,
                                 }])
-                print("Restarting {0}...".format(i.id))
-                i.start()
+
+                if instance_running:
+                        print("Restarting {0}...".format(i.id))
+                        i.start()
 # we want to restart one instnace at a time
-                i.wait_until_running()
+                        i.wait_until_running()
         print ("Job's done!")
         return
 
 @instances.command('delete_snap',help="Deletes snapshots of all volumes matching the tags")
-@click.option('--purpose', default='Python', help="Only instances for this purpose (tag purpose:<name>)")
-def delete_snap(purpose):
+@click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
+@click.option('--force', default=False, is_flag=True,
+        help="if the purpose tag is missing, only delete if the --force option is present")
+def delete_snap(purpose, force):
         "Delete tagged snapshots for EC2 instances"
-    
+        if not purpose and not force: 
+                print("No tag info was given. Use --purpose=<tag valye>, or specify --force")
+                return
+   
         instances = filter_instances(purpose)
         for i in instances:
                 for v in i.volumes.all():
@@ -104,9 +119,14 @@ def delete_snap(purpose):
 
 @instances.command('list')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
-def list_instances(purpose):
+@click.option('--force', default=False, is_flag=True,
+        help="if the purpose tag is missing, only list if the --force option is present")
+
+def list_instances(purpose, force):
         "List EC2 instances"
-    
+        if not purpose and not force:  
+                print("No tag info was given. Use --purpose=<tag valye>, or specify --force")
+                return                   
         instances = filter_instances(purpose)
 
         for i in instances:
@@ -123,9 +143,14 @@ def list_instances(purpose):
 
 @instances.command('stop')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
-def stop_instances(purpose):
+@click.option('--force', default=False, is_flag=True,
+        help="if the purpose tag is missing, only stop if the --force option is present")
+def stop_instances(purpose, force):
         "Stop EC2 instances"
-        
+        if not purpose and not force: 
+                print("No tag info was given. Use --purpose=<tag valye>, or specify --force")
+                return
+       
         instances = filter_instances(purpose)
 
         for i in instances:
@@ -139,8 +164,14 @@ def stop_instances(purpose):
 
 @instances.command('start')
 @click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
-def start_instances(purpose):
+@click.option('--force', default=False, is_flag=True,
+        help="if the purpose tag is missing, only start if the --force option is present")
+def start_instances(purpose, force):
         "Start EC2 instances"
+        if not purpose and not force: 
+                print("No tag info was given. Use --purpose=<tag valye>, or specify --force")
+                return
+
         
         instances = filter_instances(purpose)
 
@@ -152,6 +183,31 @@ def start_instances(purpose):
                         print(" Could not start {0}. ".format(i.id) + str(e))
                         continue
         return
+
+@instances.command('reboot')
+@click.option('--purpose', default=None, help="Only instances for this purpose (tag purpose:<name>)")
+@click.option('--force', default=False, is_flag=True,
+        help="if the purpose tag is missing, only reboot if the --force option is present")
+def reboot_instances(purpose, force):
+        "Reboot EC2 instances"
+        if not purpose and not force: 
+                print("No tag info was given. Use --purpose=<tag valye>, or specify --force")
+                return
+
+        instances = filter_instances(purpose)
+
+        for i in instances:
+                print("Stopping {0}...".format(i.id))
+                try:
+                        i.stop()
+                        i.wait_until_stopped()
+                        print("Now starting {0}...".format(i.id))
+                        i.start()
+                except botocore.exceptions.ClientError as e:
+                        print(" Could not reboot {0}. ".format(i.id) + str(e))
+                        continue        
+        return
+
 
 @volumes.command('list')
 @click.option('--purpose', default=None, help="Only volumes for this purpose (tag purpose:<name>)")
